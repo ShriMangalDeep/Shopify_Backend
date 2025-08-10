@@ -1,71 +1,26 @@
-name: Deploy Lambda + Layer
+name: Deploy Lambda Function
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      LAMBDA_FN: ${{ secrets.LAMBDA_FUNCTION_NAME }}
-      LAYER_NAME: ${{ secrets.AWS_LAYER_NAME }}
+
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v2
+      - name: Install zip tool
+        uses: montudor/action-zip@v1
+      - name: Create Zip file for Lambda function
+        run: zip -r code.zip .
+      - name: AWS CLI v2
+        uses: imehedi/actions-awscli-v2@latest
         with:
-          node-version: '20'
-
-      - name: Install layer dependencies
-        run: |
-          cd layers/nodejs
-          npm ci --production
-          cd ../..
-
-      - name: Zip layer
-        run: |
-          rm -f layer.zip
-          cd layers
-          zip -r ../layer.zip nodejs
-          cd ..
-
-      - name: Zip function code
-        run: |
-          rm -f function.zip
-          cd src
-          zip -r ../function.zip .
-          cd ..
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Publish Layer
-        id: publish_layer
-        run: |
-          set -e
-          aws lambda publish-layer-version \
-            --layer-name "${{ env.LAYER_NAME }}" \
-            --zip-file "fileb://layer.zip" \
-            --compatible-runtimes nodejs20.x > layer.json
-          cat layer.json
-          LAYER_VERSION_ARN=$(jq -r '.LayerVersionArn' layer.json)
-          echo "LAYER_VERSION_ARN=$LAYER_VERSION_ARN" >> $GITHUB_OUTPUT
-
-      - name: Update Lambda configuration to attach the new layer
-        run: |
-          aws lambda update-function-configuration \
-            --function-name "${{ env.LAMBDA_FN }}" \
-            --layers "${{ steps.publish_layer.outputs.LAYER_VERSION_ARN }}"
-
-      - name: Update Lambda code
-        run: |
-          aws lambda update-function-code \
-            --function-name "${{ env.LAMBDA_FN }}" \
-            --zip-file fileb://function.zip
+          args: "lambda update-function-code \
+            --function-name arn:aws:lambda:eu-north-1:353563799102:function:shopifyBackend
+            --zip-file fileb://code.zip"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-north-1"
