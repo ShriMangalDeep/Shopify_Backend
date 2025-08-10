@@ -1,0 +1,15 @@
+{
+  "name": "shopify_layers",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@shopify/shopify-api": "^11.14.1",
+    "dotenv": "^17.2.1"
+  }
+}
