@@ -5,10 +5,15 @@ dotenv.config();
 
 export const handler = async () => {
   return {
-    statusCode: 200,
+    statusCode: 201,
     body: JSON.stringify({
       dotenvWorking: !!process.env,
       shopifyApiImported: typeof shopifyApi === 'function'
     })
   };
 };
+
+// Local test
+if (process.env.ENV === 'LOCAL') {
+  handler({ test: true }).then(console.log).catch(console.error);
+}

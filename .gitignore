@@ -139,8 +139,10 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # --- AWS Lambda Layers ---
+/layers
 layers/nodejs/node_modules/
 *.zip
+/node_modules
 
 # --- Local environment variables ---
 .env
